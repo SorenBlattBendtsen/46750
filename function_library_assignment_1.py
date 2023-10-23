@@ -108,18 +108,4 @@ def mapping_dictionaries(gen_data, wf_nodes:list = [2, 4, 6, 15, 20, 22]):
     for n in range(n_bus):
         wf_map[n] = np.where(np.array(wf_nodes) == n)[0].tolist()
 
-    #Unused:
-
-    # gens_not_at_bus = {}
-
-    # for n in range(1, n_bus + 1):
-    #     gens_not_at_bus[n - 1] = (gen_data['Unit #'][gen_data['Node'] != n] - 1).tolist()
-
-    # wf_nodes = np.array([2, 4, 6, 15, 20, 22])
-
-    # wf_not_at_bus = {}
-
-    # for n in range(n_bus):
-    #     wf_not_at_bus[n] = np.where(np.array(wf_nodes) != n)[0].tolist()
-
     return gens_map, wf_map
