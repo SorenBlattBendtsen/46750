@@ -69,26 +69,26 @@ def read_data(data:str, path:str = 'data/'):
                 branch_matrix[k - 1][n - 1] = branch_matrix[n - 1][k - 1] #symmetric
 
     #Since the process is so fast, we might as well just handle all the data at every function call and return the desired data
-    match data:
-        case 'gen_costs':
-            return gen_costs
-        case 'gen_data':
-            return gen_data
-        case 'line_data':
-            return line_data
-        case 'system_demand':
-            return system_demand
-        case 'load_distribution':
-            return load_distribution
-        case 'wind_data_raw':
-            return wind_data_raw
-        case 'wind_data':
-            return wind_data
-        case 'branch_matrix':
-            return branch_matrix
-        case _:
-            print('Invalid input.')
-            return None
+    
+    if data == 'gen_costs':
+        return gen_costs
+    elif data == 'gen_data':
+        return gen_data
+    elif data == 'line_data':
+        return line_data
+    elif data == 'system_demand':
+        return system_demand
+    elif data == 'load_distribution':
+        return load_distribution
+    elif data == 'wind_data_raw':
+        return wind_data_raw
+    elif data == 'wind_data':
+        return wind_data
+    elif data == 'branch_matrix':
+        return branch_matrix
+    else:
+        print('Invalid input.')
+        return None
 
 def mapping_dictionaries(gen_data, wf_nodes:list = [2, 4, 6, 15, 20, 22]):
     #These dictionarys return the 0-indexed indices of generators or wind farms located at the node n
