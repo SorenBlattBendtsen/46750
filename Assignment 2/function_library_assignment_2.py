@@ -10,7 +10,7 @@ n_bus = 24
 wind_MWp = 300
 S_base_3ph = 100
 
-def read_data(data:str, path:str = 'data/'):
+def read_data(data:str, path:str = 'data/', wind_hour: int = 9, wind_scenarios: list = list(range(100))):
     #path is the path to the folder containing the files for the assignment
 
     #data specifies which data should be read and processed:
@@ -19,12 +19,11 @@ def read_data(data:str, path:str = 'data/'):
     # 'line_data'
     # 'system_demand'
     # 'load_distribution'
-    # 'wind_data_raw'
     # 'wind_data'
     # 'branch_matrix'
 
-    gen_costs = pd.read_excel(path + 'gen_costs.xlsx')['C ($/MWh)'].to_frame()
-    gen_costs['C (DKK/MWh)'] = gen_costs['C ($/MWh)'].values * 7.03 #USD to DKK
+    gen_costs = pd.read_excel(path + 'gen_costs.xlsx')
+    gen_costs[gen_costs.columns[1:]] = gen_costs[gen_costs.columns[1:]].values
 
     gen_data = pd.read_excel(path + 'gen_data.xlsx')
     line_data = pd.read_excel(path + 'line_data.xlsx')
@@ -32,30 +31,25 @@ def read_data(data:str, path:str = 'data/'):
     system_demand = pd.read_excel(path + 'system_demand.xlsx')
     load_distribution = pd.read_excel(path + 'load_distribution.xlsx')
 
-    # Wind data processing - see the notebook for visualization
-    wind_data_raw = []
+    # Wind data processing
+    wind_data_list = []
     for i in range(6):
         wt = pd.read_csv(path + 'wind %d.out' % (i + 1))
         wt = wt.drop(columns = ['Unnamed: 0']) #dropping the unnecessary index column
-        wt['Mean'] = wt.mean(numeric_only=True, axis=1)
-        wind_data_raw.append(wt)
+        wt['Expected'] = wt.mean(numeric_only=True, axis=1)
 
-    wind_data = pd.DataFrame(index = wind_data_raw[0].index, data = wind_data_raw[0]['Mean'].values * wind_MWp, columns=['WF1 MW'])
+        wt = wt[list(wt.columns[wind_scenarios]) + ['Expected']] * wind_MWp
 
-    for i in range(1,6):
-        wind_data['WF%d MW' % (i + 1)] = wind_data_raw[i]['Mean'].values * wind_MWp #from normalized to MW values
+        wt = wt.loc[wt.index == wind_hour]
 
-    wind_data = wind_data[12:36].reset_index(drop=True) #selected data is from hours 13 to and including 36 (0-indexed: 12 to and including 35)
+        wind_data_list.append(wt)
+
+    wind_data = pd.concat(wind_data_list, axis=0).reset_index(drop=True)
+    wind_data.index = np.arange(1,7)
+    wind_data.index.name = 'Wind Farm'
 
 
     #Filling out branch susceptance matrix and adjusting branch data
-
-    # Important:
-    # Please consider that the capacity of the transmission lines connecting the 
-    # node pairs (15, 21), (14, 16) and (13, 23) is reduced to 400 MW, 250 MW and 250 MW, respectively
-    line_data.loc[(line_data['From'] == 15) & (line_data['To'] == 21), 'Capacity MVA'] = 400
-    line_data.loc[(line_data['From'] == 14) & (line_data['To'] == 16), 'Capacity MVA'] = 250
-    line_data.loc[(line_data['From'] == 13) & (line_data['To'] == 23), 'Capacity MVA'] = 250
     line_data['Susceptance pu'] = 1 / line_data['Reactance pu']
     line_data['Capacity pu'] = line_data['Capacity MVA'] / S_base_3ph
     
@@ -80,8 +74,6 @@ def read_data(data:str, path:str = 'data/'):
         return system_demand
     elif data == 'load_distribution':
         return load_distribution
-    elif data == 'wind_data_raw':
-        return wind_data_raw
     elif data == 'wind_data':
         return wind_data
     elif data == 'branch_matrix':
